@@ -1,0 +1,122 @@
+import pandas as pd
+
+# Importações para automatizar a web
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+import time
+
+# Caminho do arquivo Excel (trocar o nome do arquivo toda vez que a turma mudar)
+nome_do_arquivo = "C:/Users/priscila.rocha/OneDrive - VINCI Energies/VSCODE/Bot_ler_excel/arquivo1704COMEMAIl.xlsx"
+
+# Ler o arquivo Excel
+df = pd.read_excel(nome_do_arquivo)
+
+# URL da academia (trocar a url da turma  toda vez que a turma mudar - deixar na tela de inserir pessoas)
+url_da_academy = "https://academy.vinci-energies.net/academy/admin/inscription/edit.action?idSession=64800&inscriptionReprise=true&backUrl=%2Facademy%2Fadmin%2Fsession%2Fedit.action%3FidFormationSelected%3D12008%26amp%3Bid%3D64800%26amp%3BongletSelectionne%3Dli_onglet3"
+
+# Inicializar o driver do Chrome
+driver = webdriver.Chrome()
+
+# Abrir a URL
+driver.get(url_da_academy)
+
+# Esperar alguns segundos para garantir que a página seja carregada
+time.sleep(4)
+
+# Loopar cada linha do arquivo Excel
+for index, row in df.iterrows():
+    print(f"Processando linha {index + 1}: Nome - {row['Nome']}")
+
+    try:
+        # Preencher o campo do nome
+        elemento_texto_nome = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="inputNomRh"]'))
+        )
+        elemento_texto_nome.send_keys(row["Nome"])
+        time.sleep(2)  # Espera para garantir o carregamento dos resultados
+
+        # Selecionar o nome na lista
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable(
+                (By.XPATH, '//*[@id="resultNamesInscrits"]/ul/li'))
+        ).click()
+        print(f"Nome {row['Nome']} selecionado.")
+
+        # Preencher o campo HR Contact
+        elemento_texto_hrcontact = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//*[@id="inputNomRhInscrivant"]'))
+        )
+        elemento_texto_hrcontact.send_keys(row["HRContact"])
+        time.sleep(2)  # Espera para garantir o carregamento dos resultados
+
+        # Selecionar o nome do RH
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable(
+                (By.XPATH, '//*[@id="resultNamesRHContacts"]/ul/li'))
+        ).click()
+        print(f"Nome {row['HRContact']} selecionado.")
+        time.sleep(2)  # Espera para garantir o carregamento dos resultados
+
+        # Clicar no botão "Criar"
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, '//*[@id="createForm"]'))
+        ).click()
+        print("Formulário enviado.")
+
+        # Esperar 5 segundos após o clique no botão "Criar"
+        time.sleep(3)
+
+        # Esperar até que a caixa de diálogo popup seja aberta
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//*[@id="saveConfirmMailMessage"]/div/div'))
+        )
+        print("Caixa de diálogo popup reconhecida.")
+
+        # Interagir com o popup "Não enviar email"
+        try:
+            button_cancelar_email = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, '//*[@id="saveConfirmMailCancel"]/button'
+                                            )))
+            button_cancelar_email.click()
+            print("Botão 'Não enviar email' clicado com sucesso.")
+        except Exception as e:
+            print(f"Erro ao clicar no botão 'Não enviar email': {e}")
+
+        # Esperar alguns segundos para finalizar a interação com o popup
+        time.sleep(2)
+
+        # Clicar no botão "Voltar à sessão"
+        try:
+            button_voltar = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable(
+                    (By.XPATH, '//*[@id="bottom-fixed-part"]/div/div[2]/a[2]/button'))
+            )
+            button_voltar.click()
+            print("Botão 'Voltar à sessão' clicado com sucesso.")
+        except Exception as e:
+            print(f"Erro ao clicar no botão 'Voltar à sessão': {e}")
+
+        # Esperar 2 segundos após voltar à sessão
+        time.sleep(2)
+
+        # Clicar no botão "Criar" novamente
+        try:
+            button_criar = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable(
+                    (By.XPATH, '//*[@id="createLink"]/button'))
+            )
+            button_criar.click()
+            print("Botão 'Criar' clicado para novo ciclo.")
+        except Exception as e:
+            print(f"Erro ao clicar no botão 'Criar' novamente: {e}")
+
+        # Esperar 3 seg. antes de processar a próxima linha
+        time.sleep(3)
+
+    except Exception as e:
+        print(f"Erro ao processar a linha {index + 1}: {e}")
